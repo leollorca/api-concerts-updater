@@ -4,12 +4,14 @@
     "start": "nodemon -r dotenv/config index.js"
   },
   "dependencies": {
-    "@fastify/cors": "^7.0.0",
-    "fastify": "^3.29.0",
+    "@fastify/cookie": "^8.3.0",
+    "@fastify/cors": "^8.1.0",
+    "fastify": "^4.8.1",
     "mongoist": "^2.5.4"
   },
   "devDependencies": {
     "dotenv": "^16.0.1",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "pino-pretty": "^9.1.1"
   }
 }
