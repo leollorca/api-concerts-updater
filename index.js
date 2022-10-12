@@ -94,3 +94,8 @@ server.delete("/concerts/:id", (request, reply) => {
       reply.code(500).send();
     });
 });
+
+server.post("/login", (request, reply) => {
+  const { email, password } = request.body;
+  console.log(email, password);
+});
