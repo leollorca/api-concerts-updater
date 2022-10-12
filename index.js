@@ -1,9 +1,27 @@
 const fastify = require("fastify");
 const cors = require("@fastify/cors");
+const cookie = require("@fastify/cookie");
 const mongoist = require("mongoist");
+const db = require("./services/db");
+const authentication = require("./services/authentication");
 
-const server = fastify({ logger: true });
+const server = fastify({
+  logger: {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+      },
+    },
+  },
+});
 server.register(cors);
+server.register(cookie, {
+  secret: process.env.COOKIE_SECRET,
+  hook: "onRequest",
+  parseOptions: {},
+});
 
 function start() {
   server
@@ -16,15 +34,6 @@ function start() {
     });
 }
 start();
-console.log(process.env.MONGO_URL);
-const db = mongoist(process.env.MONGO_URL);
-db.runCommand({ ping: 1 });
-db.on("connect", () => {
-  console.log("Database connected");
-});
-db.on("error", (err) => {
-  console.log("Database not connected", err);
-});
 
 server.get("/", (request, reply) => {
   reply.send("Welcome on Alain Llorca's concerts API !");
@@ -95,7 +104,14 @@ server.delete("/concerts/:id", (request, reply) => {
     });
 });
 
-server.post("/login", (request, reply) => {
+server.post("/login", async (request, reply) => {
   const { email, password } = request.body;
   console.log(email, password);
+  const areCredentialsValid = authentication.checkCredentials(email, password);
+  if (!areCredentialsValid) {
+    return reply.code(400).send();
+  }
+  const sessionId = await authentication.createSession();
+  authentication.setCookie(reply, sessionId);
+  reply.code(204).send();
 });
