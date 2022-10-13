@@ -1,4 +1,5 @@
 const db = require("../db");
+const mongoist = require("mongoist");
 
 const maxAge = 86400000; /* 1 day */
 const cookieName = "session";
@@ -12,7 +13,6 @@ async function createSession() {
     endDate: new Date(Date.now() + maxAge),
   };
   const response = await db.sessions.insert(session);
-  console.log("auth service", response._id);
   return response._id.toString();
 }
 
@@ -25,8 +25,27 @@ function setCookie(reply, sessionId) {
     httpOnly: true,
     sameSite: "None",
   };
-  console.log(typeof sessionId);
   reply.cookie(cookieName, sessionId, options);
 }
 
-module.exports = { checkCredentials, createSession, setCookie };
+async function checkSession(request) {
+  const { valid, renew, value } = request.unsignCookie(request.cookies.session);
+  if (!valid || renew) {
+    return false;
+  }
+  const session = await db.sessions.findOne({ _id: mongoist.ObjectId(value) });
+  if (session && session.endDate > new Date()) {
+    return true;
+  }
+  return false;
+}
+
+async function verifySession(request, reply, done) {
+  const isValidSession = checkSession(request);
+  if (!isValidSession) {
+    return reply.code(401).send();
+  }
+  done();
+}
+
+module.exports = { checkCredentials, createSession, setCookie, verifySession };

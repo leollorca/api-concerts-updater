@@ -34,75 +34,84 @@ function start() {
     });
 }
 start();
-
 server.get("/", (request, reply) => {
   reply.send("Welcome on Alain Llorca's concerts API !");
 });
 
-server.post("/concerts", (request, reply) => {
-  const concert = request.body;
-  concert.date = new Date(concert.date);
-  db.concerts
-    .insert(concert)
-    .then(() => {
-      reply.code(201).send();
-    })
-    .catch((error) => {
-      console.log(error);
-      reply.code(500).send();
-    });
-});
+server.post(
+  "/concerts",
+  { preHandler: [authentication.verifySession] },
+  (request, reply) => {
+    const concert = request.body;
+    concert.date = new Date(concert.date);
+    db.concerts
+      .insert(concert)
+      .then(() => {
+        reply.code(201).send();
+      })
+      .catch((error) => {
+        console.log(error);
+        reply.code(500).send();
+      });
+  }
+);
 
-server.get("/concerts", (request, reply) => {
+server.get("/concerts", async (request, reply) => {
   const limitDate = new Date();
   limitDate.setUTCHours(0, 0, 0, 0);
-  db.concerts
-    .find({ date: { $gte: limitDate } })
-    .then((res) => {
-      reply.send(res);
-    })
-    .catch(() => {
-      reply.code(500).send();
-    });
+  try {
+    const concerts = await db.concerts.find({ date: { $gte: limitDate } });
+    reply.code(200).send(concerts);
+  } catch (err) {
+    reply.code(500).send();
+  }
 });
 
-server.put("/concerts/:id", (request, reply) => {
-  const concertId = request.params.id;
-  const concert = request.body;
-  db.concerts
-    .update(
-      { _id: mongoist.ObjectId(concertId) },
-      {
-        $set: {
-          date: new Date(concert.date),
-          city: concert.city,
-          depNum: concert.depNum,
-          place: concert.place,
-          ticketsLink: concert.ticketsLink,
-        },
-      }
-    )
-    .then(() => {
-      reply.code(204).send();
-    })
-    .catch((error) => {
-      console.log(error);
-      reply.code(500).send();
-    });
-});
+server.put(
+  "/concerts/:id",
+  { preHandler: [authentication.verifySession] },
+  (request, reply) => {
+    const concertId = request.params.id;
+    const concert = request.body;
+    db.concerts
+      .update(
+        { _id: mongoist.ObjectId(concertId) },
+        {
+          $set: {
+            date: new Date(concert.date),
+            city: concert.city,
+            depNum: concert.depNum,
+            place: concert.place,
+            ticketsLink: concert.ticketsLink,
+          },
+        }
+      )
+      .then(() => {
+        reply.code(204).send();
+      })
+      .catch((error) => {
+        console.log(error);
+        reply.code(500).send();
+      });
+  }
+);
 
-server.delete("/concerts/:id", (request, reply) => {
-  const concertId = request.params.id;
-  db.concerts
-    .remove({ _id: mongoist.ObjectId(concertId) })
-    .then(() => {
-      reply.code(204).send();
-    })
-    .catch((error) => {
-      console.log(error);
-      reply.code(500).send();
-    });
-});
+server.delete(
+  "/concerts/:id",
+  { preHandler: [authentication.verifySession] },
+  (request, reply) => {
+    const concertId = request.params.id;
+    db.concerts
+      .remove({ _id: mongoist.ObjectId(concertId) })
+      .then(() => {
+        reply.code(204).send();
+      })
+      .catch((error) => {
+        console.log(error);
+        reply.code(500).send();
+      });
+  }
+);
 
 server.post("/login", async (request, reply) => {
   const { email, password } = request.body;
