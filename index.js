@@ -50,7 +50,6 @@ server.post(
         reply.code(201).send();
       })
       .catch((error) => {
-        console.log(error);
         reply.code(500).send();
       });
   }
@@ -90,7 +89,6 @@ server.put(
         reply.code(204).send();
       })
       .catch((error) => {
-        console.log(error);
         reply.code(500).send();
       });
   }
@@ -107,7 +105,6 @@ server.delete(
         reply.code(204).send();
       })
       .catch((error) => {
-        console.log(error);
         reply.code(500).send();
       });
   }
@@ -115,7 +112,6 @@ server.delete(
 
 server.post("/login", async (request, reply) => {
   const { email, password } = request.body;
-  console.log(email, password);
   const areCredentialsValid = authentication.checkCredentials(email, password);
   if (!areCredentialsValid) {
     return reply.code(400).send();
@@ -123,4 +119,13 @@ server.post("/login", async (request, reply) => {
   const sessionId = await authentication.createSession();
   authentication.setCookie(reply, sessionId);
   reply.code(204).send();
+});
+
+server.get("/logout", async (request, reply) => {
+  try {
+    await authentication.deleteSession(request);
+    authentication.unsetCookie(reply);
+  } catch (err) {
+    reply.code(500).send();
+  }
 });
