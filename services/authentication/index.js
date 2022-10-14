@@ -28,12 +28,18 @@ function setCookie(reply, sessionId) {
   reply.cookie(cookieName, sessionId, options);
 }
 
+function getCookie(request) {
+  return request.unsignCookie(request.cookies.session);
+}
+
 async function checkSession(request) {
-  const { valid, renew, value } = request.unsignCookie(request.cookies.session);
+  const { valid, renew, value: sessionId } = getCookie(request);
   if (!valid || renew) {
     return false;
   }
-  const session = await db.sessions.findOne({ _id: mongoist.ObjectId(value) });
+  const session = await db.sessions.findOne({
+    _id: mongoist.ObjectId(sessionId),
+  });
   if (session && session.endDate > new Date()) {
     return true;
   }
@@ -41,11 +47,27 @@ async function checkSession(request) {
 }
 
 async function verifySession(request, reply, done) {
-  const isValidSession = checkSession(request);
+  const isValidSession = await checkSession(request);
   if (!isValidSession) {
     return reply.code(401).send();
   }
   done();
 }
 
-module.exports = { checkCredentials, createSession, setCookie, verifySession };
+async function deleteSession(request) {
+  const { value: sessionId } = getCookie(request);
+  await db.sessions.remove({ _id: mongoist.ObjectId(sessionId) });
+}
+
+function unsetCookie(reply) {
+  reply.clearCookie(cookieName, { path: "/" });
+}
+
+module.exports = {
+  checkCredentials,
+  createSession,
+  setCookie,
+  verifySession,
+  deleteSession,
+  unsetCookie,
+};
