@@ -29,6 +29,10 @@ function setCookie(reply, sessionId) {
 }
 
 function getCookie(request) {
+  console.log(request.cookies.session);
+  if (!request.cookies.session) {
+    return { valid: false, renew: true };
+  }
   return request.unsignCookie(request.cookies.session);
 }
 
