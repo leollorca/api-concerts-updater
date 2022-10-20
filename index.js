@@ -16,7 +16,7 @@ const server = fastify({
     },
   },
 });
-server.register(cors);
+server.register(cors, { credentials: true, origin: "http://localhost:1234" });
 server.register(cookie, {
   secret: process.env.COOKIE_SECRET,
   hook: "onRequest",
@@ -126,6 +126,15 @@ server.get("/logout", async (request, reply) => {
     await authentication.deleteSession(request);
     authentication.unsetCookie(reply);
   } catch (err) {
+    console.log(err);
     reply.code(500).send();
   }
 });
+
+server.get(
+  "/verify-session",
+  { preHandler: [authentication.verifySession] },
+  (request, reply) => {
+    reply.code(204).send();
+  }
+);
