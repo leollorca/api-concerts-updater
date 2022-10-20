@@ -12,8 +12,12 @@ async function createSession() {
   const session = {
     endDate: new Date(Date.now() + maxAge),
   };
-  const response = await db.sessions.insert(session);
-  return response._id.toString();
+  try {
+    const response = await db.sessions.insert(session);
+    return response._id.toString();
+  } catch (error) {
+    throw error;
+  }
 }
 
 function setCookie(reply, sessionId) {
@@ -29,7 +33,6 @@ function setCookie(reply, sessionId) {
 }
 
 function getCookie(request) {
-  console.log(request.cookies.session);
   if (!request.cookies.session) {
     return { valid: false, renew: true };
   }
@@ -41,26 +44,38 @@ async function checkSession(request) {
   if (!valid || renew) {
     return false;
   }
-  const session = await db.sessions.findOne({
-    _id: mongoist.ObjectId(sessionId),
-  });
-  if (session && session.endDate > new Date()) {
-    return true;
+  try {
+    const session = await db.sessions.findOne({
+      _id: mongoist.ObjectId(sessionId),
+    });
+    if (session && session.endDate > new Date()) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    throw error;
   }
-  return false;
 }
 
 async function verifySession(request, reply, done) {
-  const isValidSession = await checkSession(request);
-  if (!isValidSession) {
-    return reply.code(401).send();
+  try {
+    const isValidSession = await checkSession(request);
+    if (!isValidSession) {
+      return reply.code(401).send();
+    }
+    done();
+  } catch {
+    reply.code(500).send();
   }
-  done();
 }
 
 async function deleteSession(request) {
   const { value: sessionId } = getCookie(request);
-  await db.sessions.remove({ _id: mongoist.ObjectId(sessionId) });
+  try {
+    await db.sessions.remove({ _id: mongoist.ObjectId(sessionId) });
+  } catch (error) {
+    throw error;
+  }
 }
 
 function unsetCookie(reply) {
