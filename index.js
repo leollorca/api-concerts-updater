@@ -2,7 +2,7 @@ const server = require("./server");
 
 function start() {
   server
-    .listen(8070)
+    .listen({ port: 8070 })
     .then(() => {
       console.info("Server is running");
     })
