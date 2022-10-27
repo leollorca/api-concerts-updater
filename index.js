@@ -2,7 +2,7 @@ const server = require("./server");
 
 function start() {
   server
-    .listen({ port: process.env.PORT })
+    .listen({ port: process.env.PORT || 8070 })
     .then(() => {
       console.info("Server is running");
     })
