@@ -18,7 +18,7 @@ const server = fastify({
 
 server.register(cors, {
   credentials: true,
-  origin: process.env.CLIENT_URL || process.env.SITE_URL,
+  origin: process.env.CLIENT_URL,
 });
 
 server.register(cookie, {
