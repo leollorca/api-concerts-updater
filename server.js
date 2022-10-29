@@ -16,9 +16,10 @@ const server = fastify({
   },
 });
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",") || "";
-
-server.register(cors, { credentials: true, origin: allowedOrigins });
+server.register(cors, {
+  credentials: true,
+  origin: process.env.CLIENT_URL || process.env.SITE_URL,
+});
 
 server.register(cookie, {
   secret: process.env.COOKIE_SECRET,
