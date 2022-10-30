@@ -16,7 +16,9 @@ const server = fastify({
   },
 });
 
-server.register(cors, { credentials: true, origin: "http://localhost:1234" });
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",") || "";
+
+server.register(cors, { credentials: true, origin: allowedOrigins });
 
 server.register(cookie, {
   secret: process.env.COOKIE_SECRET,
